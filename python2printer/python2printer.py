@@ -2,7 +2,9 @@
 
 # pip install pywin32
 
+# reference 
 # https://stackoverflow.com/questions/49778740/how-to-arrange-return-content-in-pywin32
+# https://mail.python.org/pipermail/python-list/2011-March/600668.html
 
 import sys
 import time
@@ -14,6 +16,32 @@ import os
 import datetime
 
 
+class Point:
+    __slots__ = '_x', '_y'
+    def __init__(self, x=0, y=0):
+        self._x = x
+        self._y = y
+
+    def __str__():
+        return '(%s, %s)' % (_x,_y)
+
+    @property
+    def x(self):
+        return self._x
+
+    @x.setter
+    def x(self, value):
+        self._x = value
+
+    @property
+    def y(self):
+        return self._y
+
+    @y.setter
+    def y(self, value):
+        self._y = value
+    
+
 class pyprinter:
 
     def __init__(self):
@@ -23,13 +51,14 @@ class pyprinter:
         self.FontSize = 100
         self.FontType = "Lucida Console"
         self.FontWeight = 400
-
+        self.LineWeight = 2
         self.PageSize = (210, 297)
-        self.Origin = (105, 74.5)
+
+        self.Offset = Point()
 
         self.font = win32ui.CreateFont(
             {
-                "name":  self.FontType ,
+                "name":  self.FontType,
                 "height": self.FontSize,
                 "weight": self.FontWeight,
             })
@@ -114,39 +143,62 @@ class pyprinter:
     def EndPage(self):
         self.dc.EndPage()
 
+    def SetLineWidth(self, w=2):
+        pen = win32ui.CreatePen(win32con.PS_SOLID, w, 0) 
+        self.dc.SelectObject(pen)
+
     def DrawBox(self, x, y, width, height):
-        x, y = self.Offset(x, y)
+        x, y = self.Shift(x, y)
         self.dc.Rectangle((x, y, x + width, y - height))
 
     def DrawLine(self, x1, y1, x2, y2):
-        x1, y1 = self.Offset(x1, y1)
-        x2, y2 = self.Offset(x2, y2)
+        x1, y1 = self.Shift(x1, y1)
+        x2, y2 = self.Shift(x2, y2)
         self.dc.MoveTo(x1, y1)
         self.dc.LineTo(x2, y2)
 
+
     def Text(self, x, y, txt, frame=False):
         if frame:
-            w, h = self.dc.GetTextExtent(txt)       
+            w, h = self.dc.GetTextExtent(txt)
             self.DrawBox(x, y, w, h)
 
-        x, y = self.Offset(x, y)
+        x, y = self.Shift(x, y)
         self.dc.TextOut(x, y, txt)
-       
 
-    def GetTextSize(self,txt):
-        return  self.dc.GetTextExtent(txt) 
+    def GetTextSize(self, txt):
+        return self.dc.GetTextExtent(txt)
 
-    def Offset(self, x, y):
-        x = self.PageSize[0] + x
-        y = -y - self.PageSize[1]
+    def SetOffset(self,x=0, y=0):
+        self.Offset.x=x
+        self.Offset.y=y
+
+    def Shift(self, x, y):
+        x = self.PageSize[0] + x  + self.Offset.x
+        y = -y - self.PageSize[1]  - self.Offset.y
         return x, y
 
 
 if __name__ == "__main__":
 
+   
     print('test')
     printer = pyprinter()
     printer.SetActivePrinter('Microsoft Print to PDF')
+    # printer.SetActivePrinter('HP LaserJet MFP M28-M31 PCLm-S (Network)')
+
+    pt = printer.EnumPrinter()
+
+    for k, x in enumerate(pt):
+        print ('%s. %s'%(k, x))
+
+    p = int(input("Please select output printer? "))
+    
+    print('Printing to %s..... ' % pt[p])
+    printer.SetActivePrinter(pt[p])
+    
+    
+    printer.SetOffset(-500,500)
     printer.CreateDoc("testing", (1720, 890), False)
     printer.AddPage()
 
@@ -157,7 +209,7 @@ if __name__ == "__main__":
 
     printer.SetFontSize(100)
     printer.Text(100, 130, txt)
-    printer.SetFontType("Arial")
+    printer.SetFontType("Lucida Handwriting")
     printer.Text(100, 230, str(datetime.datetime.now()), True)
 
     printer.EndPage()

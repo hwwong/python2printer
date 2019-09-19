@@ -19,4 +19,7 @@ setuptools.setup(
         "Windows :: OS Independent",
     ],
     python_requires='>=3.6',
+    install_requires=['pywin32'],
+
+
 )
