@@ -74,6 +74,9 @@ class pyprinter:
             printers.append(p[1].split(',')[0])
         return printers
 
+    def GetDefaultPrinter(self):
+        return win32print.GetDefaultPrinter()
+
     def SetActivePrinter(self, prn):
         self.printer_name = prn
 
@@ -178,11 +181,11 @@ class pyprinter:
         y = -y - self.PageSize[1]  - self.Offset.y
         return x, y
 
+    def ClosePrinter(self):
+        win32print.ClosePrinter(self.device)
 
 if __name__ == "__main__":
 
-   
-    print('test')
     printer = pyprinter()
     printer.SetActivePrinter('Microsoft Print to PDF')
     # printer.SetActivePrinter('HP LaserJet MFP M28-M31 PCLm-S (Network)')
@@ -214,12 +217,14 @@ if __name__ == "__main__":
 
     printer.EndPage()
     printer.EndDoc()
-
+    printer.ClosePrinter()
     # for x in printer.EnumPrinter():
     #     print (x)
 
     # https://newcenturycomputers.net/projects/pythonicwindowsprinting.html
 
     del printer
+
+    # build commend: python setup.py sdist bdist_wheel
 
     os.startfile('C:\\Users\\wongh\\Desktop\\test.pdf')
